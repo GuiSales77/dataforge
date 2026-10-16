@@ -1,0 +1,693 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DataForge</title>
+<style>
+:root{
+  --bg:#f6f7f9;--surface:#fff;--surface-2:#f1f3f6;--fg:#141821;--muted:#5d6675;--faint:#8a93a3;
+  --border:#e3e6eb;--accent:#2f6fed;--accent-2:#e8efff;--ok:#1f9d63;--ok-bg:#e6f6ee;--warn:#b7791f;--warn-bg:#fdf3e1;
+  --err:#d64545;--err-bg:#fdecec;--violet:#7c4dff;--violet-bg:#f1ecff;--radius:10px;--shadow:0 1px 2px rgba(16,24,40,.05),0 1px 3px rgba(16,24,40,.06);
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){
+  --bg:#0f1218;--surface:#171b23;--surface-2:#1e232d;--fg:#e8ebf0;--muted:#a1a9b7;--faint:#6f7787;--border:#2a303b;
+  --accent:#5b8cff;--accent-2:#1d2a47;--ok:#3fbf85;--ok-bg:#15301f;--warn:#e0a84a;--warn-bg:#33270f;--err:#f07070;--err-bg:#3a1a1a;
+  --violet:#a78bff;--violet-bg:#261f42;--shadow:0 1px 2px rgba(0,0,0,.4)}}
+:root[data-theme=dark]{--bg:#0f1218;--surface:#171b23;--surface-2:#1e232d;--fg:#e8ebf0;--muted:#a1a9b7;--faint:#6f7787;--border:#2a303b;
+  --accent:#5b8cff;--accent-2:#1d2a47;--ok:#3fbf85;--ok-bg:#15301f;--warn:#e0a84a;--warn-bg:#33270f;--err:#f07070;--err-bg:#3a1a1a;
+  --violet:#a78bff;--violet-bg:#261f42;--shadow:0 1px 2px rgba(0,0,0,.4)}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--fg);font:14px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}
+.app{display:flex;min-height:100vh}
+.side{width:224px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:16px 12px;position:sticky;top:0;height:100vh}
+.brand{display:flex;align-items:center;gap:10px;padding:4px 8px 18px}
+.logo{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,var(--accent),var(--violet));display:grid;place-items:center;color:#fff;font-weight:700}
+.brand b{font-size:15px}.brand small{display:block;color:var(--faint);font-size:11px;margin-top:-2px}
+.nav{display:flex;flex-direction:column;gap:2px}
+.nav button{all:unset;cursor:pointer;display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;color:var(--muted);font-weight:500}
+.nav button:hover{background:var(--surface-2);color:var(--fg)}
+.nav button.on{background:var(--accent-2);color:var(--accent)}
+.nav svg{width:17px;height:17px;flex-shrink:0}
+.side-foot{margin-top:auto;padding:10px;border-top:1px solid var(--border);font-size:12px;color:var(--muted)}
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:6px;background:var(--ok)}
+.dot.off{background:var(--faint)}
+.main{flex:1;min-width:0;display:flex;flex-direction:column}
+.top{height:56px;display:flex;align-items:center;gap:12px;padding:0 24px;border-bottom:1px solid var(--border);background:var(--surface);position:sticky;top:0;z-index:5}
+.top h1{font-size:16px;margin:0;font-weight:600}
+.top .sp{flex:1}
+.top .menu-btn{display:none}
+.content{padding:24px;max-width:1180px;width:100%;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}
+.card-h{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--border)}
+.card-h h2{font-size:14px;margin:0;font-weight:600}
+.card-h .sp{flex:1}
+.card-b{padding:16px}
+.btn{text-decoration:none;display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border);background:var(--surface);padding:7px 12px;border-radius:8px;cursor:pointer;font-weight:500;font-size:13px;white-space:nowrap}
+.btn:hover{background:var(--surface-2)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.primary:hover{filter:brightness(1.07)}
+.btn.ghost{border-color:transparent;background:transparent}
+.btn.sm{padding:4px 8px;font-size:12px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn svg{width:15px;height:15px}
+.drop{border:1.5px dashed var(--border);border-radius:var(--radius);padding:34px 16px;text-align:center;cursor:pointer;background:var(--surface);transition:.15s}
+.drop:hover,.drop.over{border-color:var(--accent);background:var(--accent-2)}
+.drop h3{margin:10px 0 4px;font-size:15px}
+.drop p{margin:0;color:var(--muted);font-size:13px}
+.drop.compact{padding:14px;display:flex;align-items:center;justify-content:center;gap:10px}
+.drop.compact h3{margin:0;font-size:13px}
+.badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:2px 7px;border-radius:999px;background:var(--surface-2);color:var(--muted);white-space:nowrap}
+.badge.ok{background:var(--ok-bg);color:var(--ok)}.badge.warn{background:var(--warn-bg);color:var(--warn)}
+.badge.err{background:var(--err-bg);color:var(--err)}.badge.acc{background:var(--accent-2);color:var(--accent)}.badge.vio{background:var(--violet-bg);color:var(--violet)}
+.files{display:flex;flex-direction:column;gap:8px}
+.file{border:1px solid var(--border);border-radius:var(--radius);background:var(--surface)}
+.file-row{display:flex;align-items:center;gap:12px;padding:10px 12px}
+.ext{width:38px;height:38px;border-radius:8px;display:grid;place-items:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0}
+.ext.xlsx,.ext.xlsm{background:#1d7a46}.ext.xls{background:#2f8f5b}.ext.csv{background:#3b6fd4}.ext.json{background:#8a5cd6}.ext.ods{background:#c27b1a}
+.file-info{flex:1;min-width:0}
+.file-name{font-weight:600;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.file-meta{color:var(--muted);font-size:12px;display:flex;gap:6px;flex-wrap:wrap;margin-top:2px}
+.alias{font-family:var(--mono);font-size:12px;background:var(--accent-2);color:var(--accent);padding:1px 7px;border-radius:5px;cursor:pointer;border:1px dashed transparent}
+.alias:hover{border-color:var(--accent)}
+.file-x{padding:12px;border-top:1px solid var(--border);display:none}
+.file.open .file-x{display:block}
+.cols{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.col{font-size:12px;border:1px solid var(--border);border-radius:6px;padding:2px 8px;display:inline-flex;gap:6px;align-items:center;cursor:pointer;background:var(--surface)}
+.col:hover{border-color:var(--accent)}
+.col i{font-style:normal;font-size:10px;color:var(--faint);text-transform:uppercase;letter-spacing:.03em}
+.tbl-wrap{overflow:auto;border:1px solid var(--border);border-radius:8px;max-height:420px}
+table.t{border-collapse:collapse;width:100%;font-size:12.5px}
+table.t th{position:sticky;top:0;background:var(--surface-2);text-align:left;font-weight:600;padding:7px 10px;border-bottom:1px solid var(--border);white-space:nowrap}
+table.t td{padding:6px 10px;border-bottom:1px solid var(--border);white-space:nowrap;max-width:320px;overflow:hidden;text-overflow:ellipsis;font-variant-numeric:tabular-nums}
+table.t tr:last-child td{border-bottom:0}
+table.t td.null{color:var(--faint);font-style:italic}
+.cmd{width:100%;min-height:92px;resize:vertical;border:1px solid var(--border);border-radius:8px;padding:12px;background:var(--surface);outline:none;line-height:1.5}
+.cmd:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-2)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.chip{border:1px solid var(--border);background:var(--surface);border-radius:999px;padding:3px 10px;font-size:12px;cursor:pointer}
+.chip:hover{border-color:var(--accent);color:var(--accent)}
+.chip.mono{font-family:var(--mono)}
+.lbl{font-size:11px;color:var(--faint);font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-right:4px;align-self:center}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.seg{display:inline-flex;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.seg button{all:unset;cursor:pointer;padding:6px 11px;font-size:12.5px;font-weight:500;color:var(--muted)}
+.seg button.on{background:var(--accent-2);color:var(--accent)}
+.meter{height:6px;background:var(--surface-2);border-radius:999px;overflow:hidden;width:120px}
+.meter i{display:block;height:100%;border-radius:999px}
+.kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.kv>div{background:var(--surface-2);border-radius:8px;padding:10px 12px}
+.kv small{display:block;color:var(--muted);font-size:11.5px}
+.kv b{font-size:17px;font-variant-numeric:tabular-nums}
+.steps{display:flex;flex-direction:column;gap:6px;margin:0;padding:0;list-style:none}
+.step{display:flex;gap:10px;align-items:flex-start;padding:9px 10px;border:1px solid var(--border);border-radius:8px}
+.step.off{opacity:.45;text-decoration:line-through}
+.step .n{width:22px;height:22px;border-radius:50%;background:var(--accent-2);color:var(--accent);font-size:11px;font-weight:700;display:grid;place-items:center;flex-shrink:0}
+.step .d{flex:1}
+.step .o{font-size:11px;color:var(--faint);font-family:var(--mono)}
+.trace{display:flex;flex-direction:column;gap:0;margin-top:4px}
+.tr{display:grid;grid-template-columns:96px 1fr 50px;gap:10px;padding:6px 0;border-bottom:1px dashed var(--border);font-size:12.5px}
+.tr:last-child{border-bottom:0}
+.tr .a{font-weight:600;color:var(--muted)}
+.tr.aviso .m{color:var(--warn)}.tr.erro .m{color:var(--err)}.tr.sucesso .m{color:var(--ok);font-weight:600}
+.tr .ms{color:var(--faint);text-align:right;font-variant-numeric:tabular-nums}
+details summary{cursor:pointer;color:var(--muted);font-weight:500;font-size:13px}
+.tabs{display:flex;gap:4px;overflow-x:auto;border-bottom:1px solid var(--border);margin-bottom:12px}
+.tabs button{all:unset;cursor:pointer;padding:8px 12px;font-size:13px;color:var(--muted);border-bottom:2px solid transparent;white-space:nowrap}
+.tabs button.on{color:var(--accent);border-color:var(--accent);font-weight:600}
+.hidden{display:none!important}
+.empty{text-align:center;color:var(--muted);padding:36px 16px}
+.spin{width:16px;height:16px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:sp .7s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.toast{position:fixed;right:20px;bottom:20px;background:var(--fg);color:var(--bg);padding:10px 14px;border-radius:8px;font-size:13px;z-index:50;box-shadow:0 6px 20px rgba(0,0,0,.2);max-width:360px}
+.form{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.f label{display:block;font-size:12.5px;font-weight:600;margin-bottom:4px}
+.f small{display:block;color:var(--muted);font-size:11.5px;margin-top:3px}
+.f input[type=text],.f input[type=number],.f input[type=password],.f select{width:100%;border:1px solid var(--border);border-radius:7px;padding:7px 9px;background:var(--surface)}
+.f input:focus,.f select:focus{outline:none;border-color:var(--accent)}
+.sw{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;cursor:pointer}
+.ops{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
+.op{border:1px solid var(--border);border-radius:8px;padding:12px;background:var(--surface)}
+.op h4{margin:0 0 4px;font-size:13.5px}
+.op p{margin:0 0 8px;color:var(--muted);font-size:12.5px}
+.op code{font-family:var(--mono);font-size:11px;color:var(--faint)}
+.hist td.c{max-width:360px;white-space:normal;line-height:1.35}
+.fb button{all:unset;cursor:pointer;padding:2px 6px;border-radius:6px;font-size:15px;opacity:.55}
+.fb button:hover,.fb button.on{opacity:1;background:var(--surface-2)}
+.boot{position:fixed;inset:0;z-index:100;background:var(--bg);display:grid;place-items:center}
+.boot-box{display:flex;flex-direction:column;align-items:center;gap:12px;padding:24px}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:20;display:none}
+.callout{display:flex;gap:10px;padding:10px 12px;border-radius:8px;background:var(--accent-2);color:var(--fg);font-size:13px}
+.callout.warn{background:var(--warn-bg)}
+@media (max-width:860px){
+  .side{position:fixed;left:-240px;z-index:30;transition:.2s}
+  .side.open{left:0}
+  .overlay.on{display:block}
+  .top .menu-btn{display:inline-flex}
+  .content{padding:16px}
+  .top{padding:0 16px}
+  .tr{grid-template-columns:80px 1fr}
+  .tr .ms{display:none}
+}
+</style>
+</head>
+<body>
+<div class="boot hidden" id="boot"><div class="boot-box"><div class="logo" style="width:44px;height:44px;font-size:20px">D</div>
+  <b style="font-size:16px">DataForge</b><div class="row" style="gap:8px;color:var(--muted)"><span class="spin"></span><span id="bootMsg">Iniciando…</span></div>
+  <small style="color:var(--faint);max-width:320px;text-align:center">No primeiro acesso o motor leva alguns segundos para carregar. Suas planilhas são processadas no seu computador e não são enviadas para nenhum servidor.</small></div></div>
+<div class="app">
+  <aside class="side" id="side">
+    <div class="brand"><div class="logo">D</div><div><b>DataForge</b><small>planilhas inteligentes</small></div></div>
+    <nav class="nav" id="nav">
+      <button data-p="processar" class="on"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 3h8l4 4v10H4z"/><path d="M12 3v4h4M7 11h6M7 14h4"/></svg>Processar</button>
+      <button data-p="historico"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="10" cy="10" r="7"/><path d="M10 6v4l3 2"/></svg>Histórico</button>
+      <button data-p="memoria"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M7 4a3 3 0 0 0-3 3v1a3 3 0 0 0 0 5 3 3 0 0 0 6 1V5a2 2 0 0 0-3-1zM13 4a3 3 0 0 1 3 3v1a3 3 0 0 1 0 5 3 3 0 0 1-6 1"/></svg>Cérebro</button>
+      <button data-p="operacoes"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="6" height="6" rx="1"/><rect x="11" y="3" width="6" height="6" rx="1"/><rect x="3" y="11" width="6" height="6" rx="1"/><rect x="11" y="11" width="6" height="6" rx="1"/></svg>Operações</button>
+      <button data-p="config"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="10" cy="10" r="2.5"/><path d="M10 2.5v2M10 15.5v2M2.5 10h2M15.5 10h2M4.7 4.7l1.4 1.4M13.9 13.9l1.4 1.4M4.7 15.3l1.4-1.4M13.9 6.1l1.4-1.4"/></svg>Configurações</button>
+    </nav>
+    <div class="side-foot">
+      <div id="iaStatus"><span class="dot off"></span>IA: verificando…</div>
+      <div style="margin-top:4px"><span class="dot"></span>Dados processados localmente</div>
+      <div style="margin-top:8px;color:var(--faint)" id="ver"></div>
+    </div>
+  </aside>
+  <div class="overlay" id="ovl"></div>
+  <div class="main">
+    <header class="top">
+      <button class="btn ghost menu-btn" id="menuBtn" aria-label="menu"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h14M3 10h14M3 14h14"/></svg></button>
+      <h1 id="title">Processar planilhas</h1>
+      <div class="sp"></div>
+      <span class="badge" id="todayBadge">0 hoje</span>
+      <button class="btn ghost sm" id="themeBtn" title="Alternar tema claro/escuro" aria-label="Alternar tema"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="10" cy="10" r="6.5"/><path d="M10 3.5a6.5 6.5 0 0 1 0 13z" fill="currentColor"/></svg></button>
+    </header>
+
+    <!-- PROCESSAR -->
+    <section class="content" id="p-processar">
+      <div class="drop" id="drop">
+        <svg width="38" height="38" viewBox="0 0 40 40" fill="none"><rect x="5" y="8" width="30" height="24" rx="4" stroke="var(--accent)" stroke-width="2"/><path d="M20 14v11M15.5 18.5 20 14l4.5 4.5" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <h3>Arraste suas planilhas aqui</h3>
+        <p>ou clique para selecionar — várias de uma vez • .xlsx .xlsm .xls .csv .ods .json</p>
+        <input type="file" id="fileIn" multiple accept=".xlsx,.xlsm,.xls,.csv,.txt,.tsv,.ods,.json" hidden>
+      </div>
+
+      <div class="card hidden" id="filesCard">
+        <div class="card-h"><h2>Planilhas carregadas</h2><span class="badge acc" id="filesCount">0</span><div class="sp"></div>
+          <button class="btn sm" id="addMore">+ Adicionar</button><button class="btn sm ghost" id="clearAll">Limpar</button></div>
+        <div class="card-b">
+          <div class="callout" style="margin-bottom:12px"><span>💡</span><span>Cada planilha tem um <b>apelido</b> (clique para renomear). Use os apelidos e os nomes das colunas no comando — ex.: <i>“cruzar <b>clientes</b> com <b>vendas</b> pelo CPF e somar valor por estado”</i>.</span></div>
+          <div class="files" id="files"></div>
+        </div>
+      </div>
+
+      <div class="card hidden" id="cmdCard">
+        <div class="card-h"><h2>O que você quer fazer?</h2><div class="sp"></div>
+          <div class="seg" id="modeSeg" title="Como o cérebro decide">
+            <button data-m="" class="on">Automático</button><button data-m="local">Só local</button><button data-m="ia">Forçar IA</button>
+          </div>
+        </div>
+        <div class="card-b">
+          <textarea class="cmd" id="cmd" placeholder="Descreva em português. Ex.: limpar os dados, remover duplicatas pelo CPF e contar clientes ativos por estado"></textarea>
+          <div class="chips" id="refChips"></div>
+          <div class="chips" id="sugChips"></div>
+          <div class="row" style="justify-content:flex-end;margin-top:6px">
+            <span style="color:var(--faint);font-size:12px;margin-right:auto">Ctrl + Enter para analisar e executar</span>
+            <button class="btn" id="planBtn">Analisar plano</button>
+            <button class="btn primary" id="runBtn"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M4 2.5v11l9-5.5z"/></svg>Analisar e executar</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card hidden" id="planCard">
+        <div class="card-h"><h2>Plano de execução</h2><span id="stratBadge"></span><div class="sp"></div>
+          <div class="row" style="gap:8px"><small style="color:var(--muted)">Confiança</small><div class="meter"><i id="confBar"></i></div><b id="confTxt" style="font-variant-numeric:tabular-nums;font-size:13px"></b></div>
+        </div>
+        <div class="card-b">
+          <div class="kv" style="margin-bottom:14px" id="planKv"></div>
+          <div id="planWarn"></div>
+          <ul class="steps" id="steps"></ul>
+          <details style="margin-top:14px" id="traceBox"><summary>Como o cérebro decidiu</summary><div class="trace" id="trace"></div></details>
+          <div class="row" style="justify-content:flex-end;margin-top:14px">
+            <button class="btn" id="editBtn">Ajustar comando</button>
+            <button class="btn primary" id="execBtn"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M4 2.5v11l9-5.5z"/></svg>Executar plano</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card hidden" id="resCard">
+        <div class="card-h"><h2>Resultado</h2><span id="resBadge"></span><div class="sp"></div>
+          <span class="fb" id="fb" title="Seu feedback ensina o sistema"><small style="color:var(--muted);margin-right:4px">Ficou certo?</small><button data-v="1">👍</button><button data-v="-1">👎</button></span>
+          <a class="btn primary" id="dlBtn" href="#" role="button"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M8 2v8M4.5 7 8 10.5 11.5 7M3 13h10"/></svg>Baixar Excel</a>
+        </div>
+        <div class="card-b">
+          <div class="kv" id="resKv" style="margin-bottom:14px"></div>
+          <div class="tabs" id="resTabs"></div>
+          <div id="resTable"></div>
+          <details style="margin-top:14px"><summary>Log de execução</summary><div class="trace" id="resLog"></div></details>
+        </div>
+      </div>
+    </section>
+
+    <!-- HISTÓRICO -->
+    <section class="content hidden" id="p-historico">
+      <div class="kv" id="histKv"></div>
+      <div class="card"><div class="card-h"><h2>Processamentos</h2><div class="sp"></div><input id="histQ" placeholder="Buscar comando…" style="border:1px solid var(--border);border-radius:7px;padding:6px 9px;background:var(--surface);width:220px"></div>
+        <div class="tbl-wrap" style="border:0;border-radius:0;max-height:none"><table class="t hist"><thead><tr><th>Data</th><th>Comando</th><th>Estratégia</th><th>Confiança</th><th>Status</th><th>Linhas</th><th>Tempo</th><th>Custo IA</th><th>Feedback</th><th></th></tr></thead><tbody id="histBody"></tbody></table></div>
+      </div>
+    </section>
+
+    <!-- CÉREBRO -->
+    <section class="content hidden" id="p-memoria">
+      <div class="card"><div class="card-h"><h2>Como o DataForge pensa</h2></div><div class="card-b">
+        <div class="kv" id="brainKv" style="margin-bottom:16px"></div>
+        <ol style="margin:0;padding-left:18px;color:var(--muted);display:flex;flex-direction:column;gap:6px">
+          <li><b style="color:var(--fg)">Contexto</b> — o Perfilador lê cada planilha, detecta tipos (CPF, CNPJ, e-mail, telefone, data, número, categoria) e mede a qualidade.</li>
+          <li><b style="color:var(--fg)">Memória</b> — procura comandos parecidos que já deram certo em planilhas com estrutura semelhante e adapta o plano (custo zero).</li>
+          <li><b style="color:var(--fg)">Intérprete local</b> — entende o português com regras e similaridade: acha planilhas, colunas, valores (“ativos” → Status = Ativo), operadores e chaves de cruzamento.</li>
+          <li><b style="color:var(--fg)">Roteador</b> — mede a confiança e a complexidade. Se a confiança for baixa, aciona a IA escolhendo o modelo simples ou o complexo.</li>
+          <li><b style="color:var(--fg)">IA externa (opcional)</b> — recebe só a estrutura e amostras mascaradas (LGPD) e devolve um plano em JSON.</li>
+          <li><b style="color:var(--fg)">Validador</b> — corrige nomes, testa o plano numa amostra e descarta passos inválidos antes de tocar nos dados.</li>
+          <li><b style="color:var(--fg)">Executor e Relator</b> — executa localmente e gera o Excel com abas de resultado, resumo e log. Seu 👍/👎 alimenta a memória.</li>
+        </ol></div></div>
+      <div class="card"><div class="card-h"><h2>Planos aprendidos</h2><div class="sp"></div><small style="color:var(--muted)">Reutilizados automaticamente quando o comando e a estrutura forem parecidos</small></div>
+        <div class="card-b" id="learned"></div></div>
+    </section>
+
+    <!-- OPERAÇÕES -->
+    <section class="content hidden" id="p-operacoes">
+      <div class="callout">Estas são as operações que o cérebro sabe combinar. Você não precisa usar os nomes técnicos — basta descrever o que quer.</div>
+      <div class="ops" id="ops"></div>
+    </section>
+
+    <!-- CONFIG -->
+    <section class="content hidden" id="p-config">
+      <div class="card"><div class="card-h"><h2>Cérebro e roteamento</h2></div><div class="card-b form" id="cfgBrain"></div></div>
+      <div class="card"><div class="card-h"><h2>IA externa (opcional)</h2><div class="sp"></div><button class="btn sm" id="testIa">Testar conexão</button></div><div class="card-b form" id="cfgIa"></div></div>
+      <div class="card"><div class="card-h"><h2>Privacidade (LGPD)</h2></div><div class="card-b form" id="cfgPriv"></div></div>
+      <div class="card"><div class="card-h"><h2>Processamento e servidor</h2></div><div class="card-b form" id="cfgProc"></div></div>
+      <div class="row" style="justify-content:flex-end"><button class="btn primary" id="saveCfg">Salvar configurações</button></div>
+    </section>
+  </div>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt = n => (n ?? 0).toLocaleString('pt-BR');
+const S = { sid: null, datasets: [], plan: null, lastCmd: '', mode: '', job: null, results: [], cfg: null };
+const TYPE_LABEL = {cpf:'CPF',cnpj:'CNPJ',email:'e-mail',telefone:'telefone',cep:'CEP',data:'data',numero:'número',moeda:'moeda',categoria:'categoria',texto:'texto',booleano:'sim/não',id:'id',vazio:'vazio'};
+const STRAT = {memoria:['vio','🧠 Memória'],local:['ok','⚡ Regras locais'],ia:['acc','✨ IA'],hibrido:['acc','✨ Híbrido'],manual:['','Manual'],nenhuma:['err','Não entendido']};
+
+// ---------- transporte: servidor local (python main.py) ou motor no navegador (site) ----------
+let WEB = false, worker = null, seq = 0;
+const pending = new Map();
+function callWorker(msg) { return new Promise((ok, no) => { const id = ++seq; pending.set(id, {ok, no}); worker.postMessage({...msg, id}); }); }
+async function bootEngine() {
+  try { const r = await fetch('api/settings', {cache: 'no-store'}); if (r.ok && (r.headers.get('content-type') || '').includes('json')) return; } catch (e) {}
+  WEB = true;
+  $('#boot').classList.remove('hidden');
+  worker = new Worker('worker.js');
+  worker.onmessage = e => {
+    const d = e.data;
+    if (d.type === 'progress') { $('#bootMsg').textContent = d.msg; return; }
+    const p = pending.get(d.id); if (!p) return; pending.delete(d.id);
+    d.error ? p.no(new Error(d.error)) : p.ok(d);
+  };
+  const q = new URLSearchParams(location.search).get('pyodide');
+  try { await callWorker({type: 'init', base: q || undefined}); }
+  catch (e) { $('#bootMsg').textContent = 'Falha ao iniciar o motor: ' + e.message + '. Verifique a internet e recarregue.'; throw e; }
+  $('#boot').classList.add('hidden');
+}
+const engineReady = bootEngine();
+async function api(path, body) {
+  await engineReady;
+  if (WEB) {
+    const r = await callWorker({type: 'call', method: body === undefined ? 'GET' : 'POST', path, body});
+    if (r.code >= 400 || r.payload?.erro) throw new Error(r.payload?.erro || 'erro ' + r.code);
+    return r.payload;
+  }
+  const r = await fetch(path, body === undefined ? {} : {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
+  const d = await r.json().catch(() => ({erro: 'resposta inválida'}));
+  if (!r.ok || d.erro) throw new Error(d.erro || r.statusText);
+  return d;
+}
+async function downloadJob(job) {
+  if (!job) return;
+  try {
+    const d = await api('/api/download', {job_id: job});
+    const bin = atob(d.data), buf = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+    const url = URL.createObjectURL(new Blob([buf], {type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}));
+    const a = Object.assign(document.createElement('a'), {href: url, download: d.nome});
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 4000);
+  } catch (e) { toast('Falha no download: ' + e.message); }
+}
+function toast(msg, ms = 3200) { const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), ms); }
+function busy(btn, on, label) { if (!btn) return; if (on) { btn.dataset.l = btn.innerHTML; btn.innerHTML = `<span class="spin"></span>${label || 'Processando…'}`; btn.disabled = true; } else { btn.innerHTML = btn.dataset.l || btn.innerHTML; btn.disabled = false; } }
+
+// ---------- navegação ----------
+const TITLES = {processar:'Processar planilhas', historico:'Histórico', memoria:'Cérebro e memória', operacoes:'Operações disponíveis', config:'Configurações'};
+function go(p) {
+  $$('#nav button').forEach(b => b.classList.toggle('on', b.dataset.p === p));
+  $$('section.content').forEach(s => s.classList.toggle('hidden', s.id !== 'p-' + p));
+  $('#title').textContent = TITLES[p];
+  $('#side').classList.remove('open'); $('#ovl').classList.remove('on');
+  if (p === 'historico' || p === 'memoria') loadHistory();
+  if (p === 'operacoes') loadOps();
+  if (p === 'config') loadCfg();
+}
+$$('#nav button').forEach(b => b.onclick = () => go(b.dataset.p));
+$('#menuBtn').onclick = () => { $('#side').classList.add('open'); $('#ovl').classList.add('on'); };
+$('#ovl').onclick = () => { $('#side').classList.remove('open'); $('#ovl').classList.remove('on'); };
+$('#themeBtn').onclick = () => {
+  const cur = document.documentElement.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  const nx = cur === 'dark' ? 'light' : 'dark'; document.documentElement.dataset.theme = nx; try { localStorage.setItem('df-theme', nx); } catch (e) {}
+};
+try { const th = localStorage.getItem('df-theme'); if (th) document.documentElement.dataset.theme = th; } catch (e) {}
+
+// ---------- upload ----------
+const drop = $('#drop'), fileIn = $('#fileIn');
+drop.onclick = () => fileIn.click();
+$('#addMore').onclick = () => fileIn.click();
+drop.ondragover = e => { e.preventDefault(); drop.classList.add('over'); };
+drop.ondragleave = () => drop.classList.remove('over');
+drop.ondrop = e => { e.preventDefault(); drop.classList.remove('over'); upload(e.dataTransfer.files); };
+document.addEventListener('dragover', e => e.preventDefault());
+document.addEventListener('drop', e => { e.preventDefault(); if (e.target.closest('#p-processar') && !e.target.closest('#drop')) upload(e.dataTransfer.files); });
+fileIn.onchange = () => { upload(fileIn.files); fileIn.value = ''; };
+
+function readB64(f) { return new Promise((ok, no) => { const r = new FileReader(); r.onload = () => ok(r.result); r.onerror = no; r.readAsDataURL(f); }); }
+async function upload(list) {
+  const files = [...list]; if (!files.length) return;
+  drop.classList.add('compact'); drop.innerHTML = `<span class="spin" style="color:var(--accent)"></span><h3>Lendo ${files.length} arquivo(s) e analisando colunas…</h3>`;
+  try {
+    const payload = []; for (const f of files) payload.push({name: f.name, data: await readB64(f)});
+    const d = await api('/api/upload', {sid: S.sid, files: payload});
+    S.sid = d.sid; S.datasets.push(...d.adicionados);
+    d.erros.forEach(e => toast(`Erro em ${e.arquivo}: ${e.erro}`, 6000));
+    if (d.adicionados.length) toast(`${d.adicionados.length} planilha(s) carregada(s)`);
+  } catch (e) { toast('Falha no upload: ' + e.message, 6000); }
+  resetDrop(); renderFiles();
+}
+function resetDrop() {
+  drop.classList.toggle('compact', S.datasets.length > 0);
+  drop.innerHTML = S.datasets.length
+    ? `<svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="var(--accent)" stroke-width="2"><path d="M10 4v12M4 10h12"/></svg><h3>Solte mais planilhas aqui ou clique para adicionar</h3>`
+    : `<svg width="38" height="38" viewBox="0 0 40 40" fill="none"><rect x="5" y="8" width="30" height="24" rx="4" stroke="var(--accent)" stroke-width="2"/><path d="M20 14v11M15.5 18.5 20 14l4.5 4.5" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><h3>Arraste suas planilhas aqui</h3><p>ou clique para selecionar — várias de uma vez • .xlsx .xlsm .xls .csv .ods .json</p>`;
+  drop.appendChild(fileIn);
+}
+function sizeTxt(b) { return b < 1024 ? b + ' B' : b < 1048576 ? (b/1024).toFixed(1) + ' KB' : (b/1048576).toFixed(1) + ' MB'; }
+function previewTable(cols, rows) {
+  if (!rows.length) return '<div class="empty">Sem linhas.</div>';
+  return `<div class="tbl-wrap"><table class="t"><thead><tr>${cols.map(c => `<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>${
+    rows.map(r => `<tr>${r.map(v => v === null ? '<td class="null">—</td>' : `<td title="${esc(v)}">${esc(v)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+}
+function renderFiles() {
+  const has = S.datasets.length > 0;
+  $('#filesCard').classList.toggle('hidden', !has); $('#cmdCard').classList.toggle('hidden', !has);
+  $('#filesCount').textContent = S.datasets.length;
+  $('#files').innerHTML = S.datasets.map((d, i) => {
+    const ext = (d.arquivo.split('.').pop() || '').toLowerCase();
+    const q = [];
+    if (d.duplicadas) q.push(`<span class="badge warn">${fmt(d.duplicadas)} duplicadas</span>`);
+    if (d.celulas_vazias) q.push(`<span class="badge">${fmt(d.celulas_vazias)} células vazias</span>`);
+    d.colunas.filter(c => c.invalidos).forEach(c => q.push(`<span class="badge err">${fmt(c.invalidos)} ${esc(c.nome)} inválidos</span>`));
+    if (!q.length) q.push('<span class="badge ok">sem problemas aparentes</span>');
+    return `<div class="file" data-i="${i}">
+      <div class="file-row">
+        <div class="ext ${ext}">${esc(ext.toUpperCase())}</div>
+        <div class="file-info">
+          <div class="file-name"><span class="alias" data-ren="${i}" title="Clique para renomear o apelido">${esc(d.alias)}</span><span style="color:var(--muted);font-weight:400;font-size:12.5px">${esc(d.arquivo)}</span></div>
+          <div class="file-meta"><span>${fmt(d.linhas)} linhas</span>·<span>${d.colunas.length} colunas</span>·<span>${sizeTxt(d.tamanho || 0)}</span>${q.join('')}</div>
+        </div>
+        <button class="btn sm ghost" data-tog="${i}">Detalhes</button>
+        <button class="btn sm ghost" data-rm="${i}" title="Remover">✕</button>
+      </div>
+      <div class="file-x">
+        <div class="cols">${d.colunas.map(c => `<span class="col" data-ins="${esc(c.nome)}" title="${c.nulos} vazios • ${c.unicos} únicos — clique para inserir no comando">${esc(c.nome)}<i>${TYPE_LABEL[c.tipo] || c.tipo}</i></span>`).join('')}</div>
+        ${previewTable(d.preview_colunas, d.preview)}
+      </div></div>`;
+  }).join('');
+  $$('[data-tog]').forEach(b => b.onclick = () => b.closest('.file').classList.toggle('open'));
+  $$('[data-rm]').forEach(b => b.onclick = async () => {
+    const d = S.datasets[+b.dataset.rm];
+    await api('/api/remove', {sid: S.sid, alias: d.alias}).catch(() => {});
+    S.datasets.splice(+b.dataset.rm, 1); resetDrop(); renderFiles();
+  });
+  $$('[data-ren]').forEach(b => b.onclick = async () => {
+    const d = S.datasets[+b.dataset.ren];
+    const nw = prompt('Novo apelido para a planilha (use no comando):', d.alias); if (!nw || nw === d.alias) return;
+    try { const r = await api('/api/rename', {sid: S.sid, old: d.alias, new: nw}); d.alias = r.alias; renderFiles(); } catch (e) { toast(e.message); }
+  });
+  $$('[data-ins]').forEach(b => b.onclick = () => insertRef(b.dataset.ins));
+  renderChips();
+}
+$('#clearAll').onclick = async () => {
+  for (const d of S.datasets) await api('/api/remove', {sid: S.sid, alias: d.alias}).catch(() => {});
+  S.datasets = []; ['#planCard', '#resCard'].forEach(x => $(x).classList.add('hidden')); resetDrop(); renderFiles();
+};
+function insertRef(txt) {
+  const el = $('#cmd'); const p = el.selectionStart ?? el.value.length;
+  const pre = el.value.slice(0, p), pos = el.value.slice(p);
+  const sp = pre && !/\s$/.test(pre) ? ' ' : '';
+  el.value = pre + sp + txt + ' ' + pos; el.focus(); el.selectionStart = el.selectionEnd = (pre + sp + txt + ' ').length;
+}
+function renderChips() {
+  const n = S.datasets.length;
+  $('#refChips').innerHTML = n ? `<span class="lbl">Planilhas</span>` + S.datasets.map(d => `<button class="chip mono" data-ref="${esc(d.alias)}">${esc(d.alias)}</button>`).join('') : '';
+  const a = S.datasets[0], b = S.datasets[1];
+  const col = (d, tipos) => (d?.colunas.find(c => tipos.includes(c.tipo)) || {}).nome;
+  const cat = col(a, ['categoria']), num = col(a, ['numero', 'moeda']), doc = col(a, ['cpf', 'cnpj', 'email', 'id']);
+  const sugs = [];
+  if (n >= 2) {
+    const key = col(a, ['cpf', 'cnpj', 'id', 'email']) || 'a coluna chave';
+    sugs.push(['🔗 Cruzar', `Cruzar ${a.alias} com ${b.alias} pelo ${key}`]);
+    sugs.push(['🔍 O que falta', `Comparar ${a.alias} com ${b.alias} e mostrar o que não está em ${b.alias}`]);
+    sugs.push(['📚 Unificar', `Unificar todas as planilhas em uma base única`]);
+  }
+  sugs.push(['🧹 Limpar', `Limpar os dados: remover espaços, linhas vazias e duplicatas${doc ? ' e formatar ' + doc : ''}`]);
+  if (cat) sugs.push(['📊 Contar', `Contar registros por ${cat}`]);
+  if (num && cat) sugs.push(['∑ Somar', `Somar ${num} por ${cat} e ordenar do maior para o menor`]);
+  if (doc && ['cpf','cnpj'].includes((a.colunas.find(c => c.nome === doc) || {}).tipo)) sugs.push(['✔ Validar', `Validar ${doc} e mostrar apenas os inválidos`]);
+  if (cat) sugs.push(['🗂 Abas', `Separar em abas por ${cat}`]);
+  sugs.push(['📈 Resumo', `Gerar um resumo estatístico${n > 1 ? ' das planilhas' : ''}`]);
+  $('#sugChips').innerHTML = `<span class="lbl">Sugestões</span>` + sugs.map(([l, t]) => `<button class="chip" data-sug="${esc(t)}">${l}</button>`).join('');
+  $$('[data-ref]').forEach(c => c.onclick = () => insertRef(c.dataset.ref));
+  $$('[data-sug]').forEach(c => c.onclick = () => { $('#cmd').value = c.dataset.sug; $('#cmd').focus(); });
+}
+
+// ---------- plano ----------
+$$('#modeSeg button').forEach(b => b.onclick = () => { $$('#modeSeg button').forEach(x => x.classList.toggle('on', x === b)); S.mode = b.dataset.m; });
+$('#cmd').addEventListener('keydown', e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); planAndRun(); } });
+$('#planBtn').onclick = () => makePlan();
+$('#runBtn').onclick = () => planAndRun();
+$('#editBtn').onclick = () => { $('#cmd').focus(); $('#cmdCard').scrollIntoView({behavior: 'smooth', block: 'center'}); };
+$('#execBtn').onclick = () => execute();
+
+async function makePlan(btn = $('#planBtn')) {
+  const cmd = $('#cmd').value.trim();
+  if (!cmd) { $('#cmd').focus(); toast('Descreva o que deseja fazer.'); return null; }
+  busy(btn, true, 'Pensando…');
+  try {
+    const p = await api('/api/plan', {sid: S.sid, command: cmd, modo: S.mode || undefined});
+    S.plan = p; S.lastCmd = cmd; renderPlan(); return p;
+  } catch (e) { toast(e.message, 5000); return null; }
+  finally { busy(btn, false); }
+}
+async function planAndRun() { const p = await makePlan($('#runBtn')); if (p && p.passos.length) execute(); }
+
+function renderPlan() {
+  const p = S.plan; $('#planCard').classList.remove('hidden'); $('#resCard').classList.add('hidden');
+  const [cls, lab] = STRAT[p.estrategia] || ['', p.estrategia];
+  $('#stratBadge').innerHTML = `<span class="badge ${cls}">${lab}</span>`;
+  const c = Math.round((p.confianca || 0) * 100);
+  $('#confBar').style.width = c + '%'; $('#confBar').style.background = c >= 75 ? 'var(--ok)' : c >= 50 ? 'var(--warn)' : 'var(--err)';
+  $('#confTxt').textContent = c + '%';
+  const custo = p.uso?.custo_usd ? 'US$ ' + p.uso.custo_usd.toFixed(4) : 'R$ 0,00';
+  $('#planKv').innerHTML = `<div><small>Passos</small><b>${p.passos.length}</b></div><div><small>Motor</small><b style="font-size:14px">${esc(p.modelo)}</b></div>
+    <div><small>Complexidade</small><b>${p.complexidade ?? 0}</b></div><div><small>Custo de IA</small><b style="font-size:14px">${custo}</b></div>`;
+  let w = '';
+  if (!p.passos.length) w = `<div class="callout warn" style="margin-bottom:12px">⚠️ <span>Não consegui montar um plano. ${esc(p.sugestao || '')} ${S.cfg && !S.cfg.api_key_definida ? 'Configure a IA externa em Configurações para comandos mais livres.' : ''}</span></div>`;
+  else if (p.avisos?.length) w = `<div class="callout warn" style="margin-bottom:12px">⚠️ <span>${p.avisos.map(esc).join('<br>')}</span></div>`;
+  if (p.explicacao) w += `<div class="callout" style="margin-bottom:12px">✨ <span>${esc(p.explicacao)}</span></div>`;
+  $('#planWarn').innerHTML = w;
+  $('#steps').innerHTML = p.passos.map((s, i) => `<li class="step" data-s="${i}"><span class="n">${i + 1}</span><div class="d">${esc(p.descricoes[i])}<div class="o">${esc(s.op)} → ${esc(s.saida)}</div></div>
+    <button class="btn sm ghost" data-off="${i}" title="Ativar/desativar passo">⊘</button></li>`).join('');
+  $$('[data-off]').forEach(b => b.onclick = () => { const li = b.closest('.step'); li.classList.toggle('off'); });
+  $('#trace').innerHTML = (p.trace || []).map(t => `<div class="tr ${t.nivel}"><span class="a">${esc(t.agente)}</span><span class="m">${esc(t.mensagem)}</span><span class="ms">${t.ms} ms</span></div>`).join('');
+  $('#traceBox').open = p.confianca < 0.65 || !p.passos.length;
+  $('#execBtn').disabled = !p.passos.length;
+  $('#planCard').scrollIntoView({behavior: 'smooth', block: 'start'});
+}
+
+async function execute() {
+  const p = S.plan; if (!p) return;
+  const off = new Set($$('#steps .step.off').map(li => +li.dataset.s));
+  const passos = p.passos.filter((_, i) => !off.has(i));
+  if (!passos.length) { toast('Nenhum passo ativo.'); return; }
+  busy($('#execBtn'), true, 'Executando…');
+  try {
+    const r = await api('/api/execute', {sid: S.sid, command: S.lastCmd, plan: {passos},
+      meta: {comando: S.lastCmd, estrategia: off.size ? 'manual' : p.estrategia, modelo: p.modelo, confianca: p.confianca, uso: p.uso, memoria_job: p.memoria_job}});
+    S.job = r.job_id; S.results = r.resultados; renderResult(r); refreshCounters();
+  } catch (e) { toast('Erro: ' + e.message, 6000); }
+  finally { busy($('#execBtn'), false); }
+}
+function renderResult(r) {
+  $('#resCard').classList.remove('hidden');
+  const st = {ok: ['ok', '✓ Concluído'], parcial: ['warn', '⚠ Parcial'], erro: ['err', '✕ Erro']}[r.status];
+  $('#resBadge').innerHTML = `<span class="badge ${st[0]}">${st[1]}</span>`;
+  const out = r.resultados.reduce((a, x) => a + x.linhas, 0);
+  $('#resKv').innerHTML = `<div><small>Linhas de entrada</small><b>${fmt(r.linhas_entrada)}</b></div><div><small>Abas geradas</small><b>${r.resultados.length}</b></div>
+    <div><small>Linhas no resultado</small><b>${fmt(out)}</b></div><div><small>Tempo</small><b>${(r.ms / 1000).toFixed(2)}s</b></div>`;
+  $('#dlBtn').classList.toggle('hidden', !r.download); $('#dlBtn').dataset.job = r.download || '';
+  $$('#fb button').forEach(b => b.classList.remove('on'));
+  const tabs = r.resultados;
+  $('#resTabs').innerHTML = tabs.map((t, i) => `<button data-t="${i}" class="${i === tabs.length - 1 ? 'on' : ''}">${esc(t.alias)} <span class="badge">${fmt(t.linhas)}</span></button>`).join('');
+  const show = i => { $$('#resTabs button').forEach(b => b.classList.toggle('on', +b.dataset.t === i)); const t = tabs[i];
+    $('#resTable').innerHTML = previewTable(t.colunas, t.preview) + (t.linhas > t.preview.length ? `<div style="color:var(--faint);font-size:12px;margin-top:6px">Mostrando ${t.preview.length} de ${fmt(t.linhas)} linhas — o Excel contém tudo.</div>` : ''); };
+  $$('#resTabs button').forEach(b => b.onclick = () => show(+b.dataset.t));
+  if (tabs.length) show(tabs.length - 1); else $('#resTable').innerHTML = '<div class="empty">Nenhum resultado gerado.</div>';
+  $('#resLog').innerHTML = r.log.map(e => `<div class="tr ${e.status === 'ok' ? '' : 'erro'}"><span class="a">Passo ${e.passo}</span><span class="m">${esc(e.descricao)}${e.status === 'ok' ? ` — ${fmt(e.linhas_antes)} → ${fmt(e.linhas_depois)} linhas` : ' — ' + esc(e.erro)}</span><span class="ms">${e.ms} ms</span></div>`).join('')
+    + (r.avisos || []).map(a => `<div class="tr aviso"><span class="a">Validador</span><span class="m">${esc(a)}</span><span></span></div>`).join('');
+  $('#resCard').scrollIntoView({behavior: 'smooth', block: 'start'});
+}
+$('#dlBtn').onclick = e => { e.preventDefault(); downloadJob($('#dlBtn').dataset.job); };
+$$('#fb button').forEach(b => b.onclick = async () => {
+  if (!S.job) return; await api('/api/feedback', {job_id: S.job, valor: +b.dataset.v});
+  $$('#fb button').forEach(x => x.classList.toggle('on', x === b));
+  toast(+b.dataset.v > 0 ? 'Obrigado! Este plano será reutilizado em pedidos parecidos.' : 'Anotado — este plano não será reutilizado.');
+});
+
+// ---------- histórico / memória ----------
+let HIST = [];
+async function loadHistory() {
+  const d = await api('/api/history'); HIST = d.jobs; const s = d.stats;
+  const kv = `<div><small>Processamentos</small><b>${fmt(s.total)}</b></div><div><small>Hoje</small><b>${fmt(s.hoje)}</b></div>
+    <div><small>Linhas processadas</small><b>${fmt(s.linhas)}</b></div><div><small>Custo total de IA</small><b>US$ ${(s.custo || 0).toFixed(4)}</b></div>`;
+  $('#histKv').innerHTML = kv;
+  const pe = s.por_estrategia || {}; const tot = Math.max(1, s.total);
+  const semIa = ((pe.local || 0) + (pe.memoria || 0)) / tot * 100;
+  $('#brainKv').innerHTML = `<div><small>Resolvidos sem IA</small><b>${s.total ? semIa.toFixed(0) : 0}%</b></div><div><small>Reusos da memória</small><b>${fmt(pe.memoria || 0)}</b></div>
+    <div><small>Consultas à IA</small><b>${fmt((pe.ia || 0) + (pe.hibrido || 0))}</b></div><div><small>Feedback 👍 / 👎</small><b>${fmt(s.positivos)} / ${fmt(s.negativos)}</b></div>`;
+  renderHist();
+  const learned = HIST.filter(j => j.status === 'ok' && j.feedback >= 0 && (j.feedback > 0 || j.reutilizado > 0 || j.estrategia === 'ia' || j.estrategia === 'hibrido'));
+  $('#learned').innerHTML = learned.length ? `<ul class="steps">${learned.slice(0, 40).map(j => `<li class="step"><span class="n">${j.feedback > 0 ? '👍' : '•'}</span><div class="d"><b>${esc(j.comando)}</b><div class="o">${esc(j.plano_desc.join(' → '))}</div>
+      <div class="o">${j.planilhas.map(p => esc(p.alias)).join(', ')} • reutilizado ${j.reutilizado}x • origem: ${esc(j.estrategia)}</div></div><button class="btn sm ghost" data-forget="${j.id}">Esquecer</button></li>`).join('')}</ul>`
+    : '<div class="empty">Ainda nada aprendido. Execute comandos e marque 👍 quando o resultado estiver certo.</div>';
+  $$('[data-forget]').forEach(b => b.onclick = async () => { await api('/api/forget', {job_id: b.dataset.forget}); loadHistory(); });
+}
+function renderHist() {
+  const q = ($('#histQ').value || '').toLowerCase();
+  const rows = HIST.filter(j => !q || j.comando.toLowerCase().includes(q));
+  $('#histBody').innerHTML = rows.length ? rows.map(j => {
+    const [cls, lab] = STRAT[j.estrategia] || ['', j.estrategia];
+    const st = j.status === 'ok' ? '<span class="badge ok">ok</span>' : j.status === 'parcial' ? '<span class="badge warn">parcial</span>' : '<span class="badge err">erro</span>';
+    const dt = new Date(j.criado * 1000).toLocaleString('pt-BR', {dateStyle: 'short', timeStyle: 'short'});
+    return `<tr><td>${dt}</td><td class="c" title="${esc(j.plano_desc.join(' → '))}">${esc(j.comando)}</td><td><span class="badge ${cls}">${lab}</span></td><td>${Math.round(j.confianca * 100)}%</td><td>${st}</td>
+      <td>${fmt(j.linhas_entrada)} → ${fmt(j.linhas_saida)}</td><td>${(j.ms / 1000).toFixed(2)}s</td><td>${j.custo_usd ? 'US$ ' + j.custo_usd.toFixed(4) : '—'}</td>
+      <td class="fb"><button data-hf="${j.id}" data-v="1" class="${j.feedback > 0 ? 'on' : ''}">👍</button><button data-hf="${j.id}" data-v="-1" class="${j.feedback < 0 ? 'on' : ''}">👎</button></td>
+      <td style="white-space:nowrap">${j.tem_arquivo ? `<button class="btn sm" data-dl="${j.id}" title="Baixar Excel">↓</button>` : ''} <button class="btn sm" data-reuse="${esc(j.comando)}" title="Usar este comando">↻</button></td></tr>`;
+  }).join('') : '<tr><td colspan="10" class="empty">Nenhum processamento ainda.</td></tr>';
+  $$('[data-dl]').forEach(b => b.onclick = () => downloadJob(b.dataset.dl));
+  $$('[data-hf]').forEach(b => b.onclick = async () => { await api('/api/feedback', {job_id: b.dataset.hf, valor: +b.dataset.v}); loadHistory(); });
+  $$('[data-reuse]').forEach(b => b.onclick = () => { go('processar'); $('#cmd').value = b.dataset.reuse; if (!S.datasets.length) toast('Carregue as planilhas e execute o comando.'); });
+}
+$('#histQ').oninput = renderHist;
+
+// ---------- operações ----------
+const EXEMPLOS = {
+  remover_duplicatas: 'remover duplicatas pelo CPF', remover_linhas_vazias: 'remover linhas vazias', remover_espacos: 'tirar espaços extras',
+  padronizar_texto: 'deixar os nomes em maiúsculas', formatar_documentos: 'formatar CPF e telefone', preencher_vazios: 'preencher vazios do telefone com NÃO INFORMADO',
+  converter_tipos: '(usado pela IA)', validar_documentos: 'validar CPF e mostrar apenas os inválidos', cruzar: 'cruzar clientes com vendas pelo CPF / procv',
+  comparar: 'mostrar clientes que não estão nas vendas', unificar: 'unificar todas as planilhas', filtrar: 'apenas clientes ativos de SP com valor maior que 500',
+  selecionar_colunas: 'manter apenas as colunas nome, cpf e estado', remover_colunas: 'remover a coluna telefone', renomear_colunas: '(usado pela IA)',
+  coluna_calculada: '(usado pela IA) total = preço × quantidade', contar_por: 'quantos clientes por estado', agrupar: 'somar valor por filial / média por produto',
+  tabela_dinamica: 'tabela dinâmica de estado por status', estatisticas: 'gerar um resumo das planilhas', ordenar: 'ordenar do maior para o menor',
+  top_n: 'top 5 filiais por valor', dividir_por: 'separar em abas por estado'};
+async function loadOps() {
+  if ($('#ops').childElementCount) return;
+  const d = await api('/api/operations');
+  const fase = ['Limpeza', 'Validação', 'Combinação', 'Filtro e colunas', 'Análise', 'Ordenação', 'Saída'];
+  $('#ops').innerHTML = d.operacoes.map(o => `<div class="op"><div class="row" style="justify-content:space-between"><h4>${esc(o.label)}</h4><span class="badge">${fase[o.fase]}</span></div>
+    <p>${esc(o.descricao)}</p><div style="font-size:12.5px;margin-bottom:6px">💬 <i>“${esc(EXEMPLOS[o.nome] || '')}”</i></div><code>${esc(o.nome)}</code></div>`).join('');
+}
+
+// ---------- configurações ----------
+const CFG_FIELDS = {
+  cfgBrain: [
+    ['modo', 'select', 'Modo do cérebro', 'Automático: usa regras/memória e só chama a IA quando a confiança for baixa.', [['hibrido', 'Automático (híbrido)'], ['local', 'Somente local (sem IA)'], ['ia', 'Sempre IA']]],
+    ['limiar_confianca', 'number', 'Limiar de confiança', 'Entre 0 e 1. Abaixo disso o modo automático consulta a IA.', null, 0.05],
+    ['usar_memoria', 'bool', 'Usar memória de planos', 'Reaproveita planos que funcionaram em pedidos parecidos.'],
+    ['limiar_memoria', 'number', 'Similaridade mínima para reuso', 'Entre 0 e 1 (texto + estrutura das planilhas).', null, 0.01],
+    ['similaridade_colunas', 'number', 'Tolerância para nomes de colunas', 'Menor = aceita nomes mais diferentes (0.6–0.95).', null, 0.01],
+    ['limiar_complexidade', 'number', 'Complexidade para modelo avançado', 'A partir deste score usa o modelo complexo.', null, 1],
+  ],
+  cfgIa: [
+    ['api_key', 'password', 'Chave da API', 'Fica salva somente neste navegador/computador.'],
+    ['api_url', 'text', 'Endpoint da API', 'URL de mensagens do provedor de IA.'],
+    ['modelo_simples', 'text', 'Modelo para pedidos simples', 'ID do modelo rápido/barato do seu provedor.'],
+    ['modelo_complexo', 'text', 'Modelo para pedidos complexos', 'ID do modelo mais capaz (opcional).'],
+    ['max_tokens', 'number', 'Máximo de tokens na resposta', '', null, 100],
+    ['timeout_ia', 'number', 'Tempo limite (s)', '', null, 5],
+    ['preco_entrada_simples', 'number', 'Preço entrada — simples (US$/M)', '', null, 0.01],
+    ['preco_saida_simples', 'number', 'Preço saída — simples (US$/M)', '', null, 0.01],
+    ['preco_entrada_complexo', 'number', 'Preço entrada — complexo (US$/M)', '', null, 0.01],
+    ['preco_saida_complexo', 'number', 'Preço saída — complexo (US$/M)', '', null, 0.01],
+  ],
+  cfgPriv: [
+    ['mascarar_dados', 'bool', 'Mascarar amostras', 'CPF, e-mail, telefone e textos são mascarados antes de qualquer envio à IA.'],
+    ['amostra_linhas', 'number', 'Linhas de amostra por coluna', 'Quantos exemplos (mascarados) a IA recebe.', null, 1],
+    ['enviar_valores_categoria', 'bool', 'Enviar valores de categorias', 'Ex.: “Ativo/Inativo”, “SP/RJ”. Melhora filtros; não inclui dados pessoais.'],
+    ['reter_uploads_dias', 'number', 'Reter uploads por (dias)', 'Arquivos enviados são apagados após esse prazo.', null, 1],
+  ],
+  cfgProc: [
+    ['limpar_espacos_auto', 'bool', 'Tirar espaços extras na leitura', ''],
+    ['estilizar_excel', 'bool', 'Estilizar o Excel de saída', 'Cabeçalho colorido, filtros e largura automática.'],
+    ['linhas_preview', 'number', 'Linhas na pré-visualização', '', null, 10],
+    ['max_abas_saida', 'number', 'Máximo de abas no Excel', '', null, 1],
+    ['porta', 'number', 'Porta local', 'Vale no próximo início (versão local).', null, 1],
+    ['abrir_navegador', 'bool', 'Abrir navegador ao iniciar (versão local)', ''],
+  ]};
+async function loadCfg() {
+  const c = S.cfg = await api('/api/settings');
+  for (const [box, fields] of Object.entries(CFG_FIELDS)) {
+    $('#' + box).innerHTML = fields.filter(f => !(WEB && ['porta', 'abrir_navegador'].includes(f[0]))).map(([k, t, l, h, opts, step]) => {
+      let inp;
+      if (t === 'select') inp = `<select data-k="${k}">${opts.map(([v, n]) => `<option value="${v}" ${c[k] === v ? 'selected' : ''}>${n}</option>`).join('')}</select>`;
+      else if (t === 'bool') return `<div class="f"><label class="sw"><input type="checkbox" data-k="${k}" ${c[k] ? 'checked' : ''}> ${l}</label><small>${h}</small></div>`;
+      else if (t === 'password') inp = `<input type="password" data-k="${k}" placeholder="${c.api_key_definida ? c.api_key_mascara + ' (definida — deixe vazio para manter)' : 'Cole sua chave aqui'}" autocomplete="off">`;
+      else inp = `<input type="${t}" data-k="${k}" value="${esc(c[k])}" ${step ? `step="${step}"` : ''}>`;
+      return `<div class="f"><label>${l}</label>${inp}<small>${h}</small></div>`;
+    }).join('');
+  }
+  if (c.api_key_definida) $('#cfgIa').insertAdjacentHTML('beforeend', `<div class="f"><label class="sw"><input type="checkbox" id="rmKey"> Remover a chave salva</label></div>`);
+}
+$('#saveCfg').onclick = async () => {
+  const body = {};
+  $$('[data-k]').forEach(el => { const k = el.dataset.k; body[k] = el.type === 'checkbox' ? el.checked : el.value; });
+  if ($('#rmKey')?.checked) body.remover_api_key = true;
+  try { S.cfg = await api('/api/settings', body); toast('Configurações salvas.'); loadCfg(); refreshCounters(); } catch (e) { toast(e.message); }
+};
+$('#testIa').onclick = async e => {
+  const key = $('[data-k=api_key]')?.value; busy(e.currentTarget, true, 'Testando…');
+  try { const r = await api('/api/test_ai', {api_key: key || undefined}); toast((r.ok ? '✓ ' : '✕ ') + r.mensagem, 6000); } catch (er) { toast(er.message); }
+  finally { busy($('#testIa'), false); }
+};
+
+async function refreshCounters() {
+  try {
+    const [c, h] = await Promise.all([api('/api/settings'), api('/api/history')]);
+    S.cfg = c;
+    $('#iaStatus').innerHTML = c.api_key_definida && (c.modelo_simples || c.modelo_complexo) ? `<span class="dot"></span>IA externa: ativa` : `<span class="dot off"></span>IA externa: desligada`;
+    $('#ver').textContent = 'v' + c.versao;
+    $('#todayBadge').textContent = `${h.stats.hoje || 0} hoje`;
+  } catch (e) {}
+}
+refreshCounters();
+</script>
+</body>
+</html>
