@@ -682,7 +682,7 @@ async function refreshCounters() {
   try {
     const [c, h] = await Promise.all([api('/api/settings'), api('/api/history')]);
     S.cfg = c;
-    $('#iaStatus').innerHTML = c.api_key_definida && (c.modelo_simples || c.modelo_complexo) ? `<span class="dot"></span>IA externa: ativa` : `<span class="dot off"></span>IA externa: desligada`;
+    $('#iaStatus').innerHTML = (c.api_key_definida || (c.api_url || '').includes('/functions/v1/')) && (c.modelo_simples || c.modelo_complexo) ? `<span class="dot"></span>IA externa: ativa` : `<span class="dot off"></span>IA externa: desligada`;
     $('#ver').textContent = 'v' + c.versao;
     $('#todayBadge').textContent = `${h.stats.hoje || 0} hoje`;
   } catch (e) {}
