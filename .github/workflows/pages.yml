@@ -21,7 +21,8 @@ jobs:
       - name: Montar site
         run: |
           mkdir _site
-          cp -r index.html worker.js .nojekyll dataforge vendor exemplos _site/
+          cp -r index.html worker.js .nojekyll dataforge _site/
+          for d in vendor exemplos; do [ -d "$d" ] && cp -r "$d" _site/ || true; done
           find _site -name "__pycache__" -prune -exec rm -rf {} +
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
