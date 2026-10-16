@@ -884,20 +884,43 @@ class AIAgent:
     def available(self):
         return bool(self.cfg.get("api_key") and self.cfg.get("api_url") and (self.cfg.get("modelo_simples") or self.cfg.get("modelo_complexo")))
 
+    def _openai_style(self):
+        u = (self.cfg.get("api_url") or "").lower()
+        return "chat/completions" in u or "openrouter" in u
+
     def _post(self, payload):
-        headers = {"content-type": "application/json", "x-api-key": self.cfg["api_key"],
-                   "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true"}
+        if self._openai_style():
+            headers = {"content-type": "application/json", "authorization": f"Bearer {self.cfg['api_key']}",
+                       "x-title": "DataForge"}
+            msgs = ([{"role": "system", "content": payload["system"]}] if payload.get("system") else []) + payload["messages"]
+            body = {"model": payload["model"], "messages": msgs, "max_tokens": payload.get("max_tokens", 1000)}
+            if "temperature" in payload:
+                body["temperature"] = payload["temperature"]
+            payload = body
+        else:
+            headers = {"content-type": "application/json", "x-api-key": self.cfg["api_key"],
+                       "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true"}
         last = None
         for attempt in range(3):
             code, text = HTTP_POST(self.cfg.get("api_url"), headers, json.dumps(payload), int(self.cfg.get("timeout_ia", 60)))
             if 200 <= code < 300:
-                return json.loads(text)
+                return self._normalize(json.loads(text))
             last = f"HTTP {code}: {text[:300]}" if code else text
             if code in (0, 429, 500, 502, 503, 529) and attempt < 2:
                 time.sleep(1.5 * (attempt + 1))
                 continue
             break
         raise RuntimeError(last or "falha desconhecida")
+
+    @staticmethod
+    def _normalize(data):
+        """Converte respostas no formato chat/completions para o formato interno."""
+        if "choices" in data:
+            msg = (data.get("choices") or [{}])[0].get("message", {}) or {}
+            u = data.get("usage") or {}
+            return {"content": [{"type": "text", "text": msg.get("content") or ""}],
+                    "usage": {"input_tokens": u.get("prompt_tokens", 0), "output_tokens": u.get("completion_tokens", 0)}}
+        return data
 
     def ping(self, model):
         data = self._post({"model": model, "max_tokens": 10, "messages": [{"role": "user", "content": "responda: ok"}]})
