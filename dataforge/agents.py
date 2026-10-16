@@ -882,16 +882,18 @@ class AIAgent:
         self.cfg = cfg
 
     def available(self):
-        return bool(self.cfg.get("api_key") and self.cfg.get("api_url") and (self.cfg.get("modelo_simples") or self.cfg.get("modelo_complexo")))
+        proxy = "/functions/v1/" in (self.cfg.get("api_url") or "")
+        return bool((self.cfg.get("api_key") or proxy) and self.cfg.get("api_url") and (self.cfg.get("modelo_simples") or self.cfg.get("modelo_complexo")))
 
     def _openai_style(self):
         u = (self.cfg.get("api_url") or "").lower()
-        return "chat/completions" in u or "openrouter" in u
+        return "chat/completions" in u or "openrouter" in u or "/functions/v1/" in u
 
     def _post(self, payload):
         if self._openai_style():
-            headers = {"content-type": "application/json", "authorization": f"Bearer {self.cfg['api_key']}",
-                       "x-title": "DataForge"}
+            headers = {"content-type": "application/json", "x-title": "DataForge"}
+            if self.cfg.get("api_key"):
+                headers["authorization"] = f"Bearer {self.cfg['api_key']}"
             msgs = ([{"role": "system", "content": payload["system"]}] if payload.get("system") else []) + payload["messages"]
             body = {"model": payload["model"], "messages": msgs, "max_tokens": payload.get("max_tokens", 1000)}
             if "temperature" in payload:

@@ -48,8 +48,8 @@ DEFAULTS = {
     "limiar_complexidade": 3,       # a partir deste score usa o modelo complexo
     # --- IA externa (opcional) ---
     "api_key": "",
-    "api_url": "",
-    "modelo_simples": "",
+    "api_url": "https://fzhzdwwaartjulmqysrs.supabase.co/functions/v1/dataforge-ia",
+    "modelo_simples": "padrao",
     "modelo_complexo": "",
     "max_tokens": 2000,
     "timeout_ia": 60,
